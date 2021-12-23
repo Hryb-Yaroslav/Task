@@ -1,0 +1,41 @@
+- name: Ansible Task
+  hosts: all
+  become: yes
+
+  tasks:
+
+  - block:
+    - name: upgrade Uduntu
+      apt: upgrade=dist force_apt_get=yes 
+      apt: name={{ 'apache2' }} state=present update_cache=yes
+      with_items: packages
+    - name: copy Ubuntu
+      copy:
+        src: /home/yaroslav/ansible/index.html
+        dest: /var/www/html/
+        mode: 0777
+      notify:
+        - Restart U
+    when: ansible_os_family == 'Debian'
+  
+  - block:
+    - name: upgrade CentOS
+      yum: update_cache=yes name={{ 'httpd' }} state=latest   
+    - name: copy CentOS
+      copy:
+        src: /home/yaroslav/ansible/index.html 
+        dest: /var/www/html/
+        mode: 0777
+      notify:
+        - Restart C
+    when: ansible_os_family == 'RedHat'
+  
+  handlers:
+    - name: Restart C
+      ansible.builtin.service:
+        name: httpd
+        state: reloaded
+    - name: Restart U
+      ansible.builtin.service:
+        name: apache2
+        state: reloaded
